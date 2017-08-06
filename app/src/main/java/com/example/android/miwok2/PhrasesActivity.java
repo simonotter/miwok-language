@@ -1,5 +1,7 @@
 package com.example.android.miwok2;
 
+import android.content.Context;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -9,9 +11,37 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 
+import static android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT;
+import static android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK;
+
 public class PhrasesActivity extends AppCompatActivity {
 
+    /** Handles playback of all the sound files */
     private MediaPlayer mMediaPlayer;
+
+    /** Handles audio focus when playing a sound file **/
+    private AudioManager mAudioManager;
+
+    AudioManager.OnAudioFocusChangeListener mOnAudioChangeListener =
+            new AudioManager.OnAudioFocusChangeListener() {
+
+                public void onAudioFocusChange(int focusChange) {
+                    if (focusChange == AUDIOFOCUS_LOSS_TRANSIENT ||
+                            focusChange == AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+                        // Pause playback and reset the file to the beginning
+                        mMediaPlayer.pause();
+                        mMediaPlayer.seekTo(0);
+                    } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+                        // The AUDIOFOCUS_GAIN case means we have regained focus and can
+                        // resume playback
+                        mMediaPlayer.start();
+                    } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+                        // The AUDIOFOCUS_LOSS case means we've lost audio focus and
+                        // stop playback and cleanup resources
+                        releaseMediaPlayer();
+                    }
+                }
+            };
 
     /**
      * This listener gets triggered when the {@Link MediaPlayer} has completed
@@ -30,9 +60,11 @@ public class PhrasesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.word_list);
 
+        // Create and setup the {@link AudioManager} to request audio focus
+        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+
         // Create an array of words
         final ArrayList<Word> words = new ArrayList<Word>();
-
         words.add(new Word("Where are you going?", "minto wuksus", R.raw.phrase_where_are_you_going));
         words.add(new Word("What is your name?", "tinnә oyaase'nә", R.raw.phrase_what_is_your_name));
         words.add(new Word("My name is...", "oyaaset...", R.raw.phrase_my_name_is));
@@ -59,15 +91,25 @@ public class PhrasesActivity extends AppCompatActivity {
                 // play a different sound file
                 releaseMediaPlayer();
 
-                // Create a setup the {@link MediaPlayer} for the audio resource associated with the current word
-                mMediaPlayer = MediaPlayer.create(PhrasesActivity.this, word.getmAudioResourceId());
+                // Request audio focus for playback
+                int result = mAudioManager.requestAudioFocus(mOnAudioChangeListener,
+                        // Use the music stream
+                        AudioManager.STREAM_MUSIC,
+                        // Request permanent focus
+                        AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
 
-                // Start the audio file
-                mMediaPlayer.start();
+                if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                    // We have audio focus now.
+                    // Create a setup the {@link MediaPlayer} for the audio resource associated with the current word
+                    mMediaPlayer = MediaPlayer.create(PhrasesActivity.this, word.getmAudioResourceId());
 
-                // Setup a listener on the media player, so that we can stop and release the
-                // media player once the sound has stopped.
-                mMediaPlayer.setOnCompletionListener(mCompletionListener);
+                    // Start the audio file
+                    mMediaPlayer.start();
+
+                    // Setup a listener on the media player, so that we can stop and release the
+                    // media player once the sound has stopped.
+                    mMediaPlayer.setOnCompletionListener(mCompletionListener);
+                }
             }
         });
     }
@@ -94,6 +136,9 @@ public class PhrasesActivity extends AppCompatActivity {
             // setting the media player to null is an easy way to tell that the media player
             // is not configured to play an audio file at the moment.
             mMediaPlayer = null;
+
+            // Abandon audio focus when playback is complete
+            mAudioManager.abandonAudioFocus(mOnAudioChangeListener);
         }
     }
 }
