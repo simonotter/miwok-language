@@ -1,6 +1,8 @@
 package com.example.android.miwok2;
 
 import android.content.Intent;
+import android.icu.util.ULocale;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -15,56 +17,13 @@ public class MainActivity extends AppCompatActivity {
         // Set the content of the activity to use the activity_main.xml layout file
         setContentView(R.layout.activity_main);
 
-        // Find the View that shows the numbers category
-        TextView numbers = (TextView) findViewById(R.id.numbers);
+        // Find the view pager that will allow the user to swipe between fragments
+        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
 
-        // Set a click listener on that View
-        numbers.setOnClickListener(new View.OnClickListener() {
-            // The code in this method will be executed when the numbers View is clicked on.
-            @Override
-            public void onClick(View view) {
-                Intent numbersIntent = new Intent(MainActivity.this, NumbersActivity.class);
-                startActivity(numbersIntent);
-            }
-        });
+        // Create an adapter that knows which fragment should be shown on each page
+        CategoryAdaptor adapter = new CategoryAdaptor(getSupportFragmentManager());
 
-        // Find the View that shows the Family Members category
-        TextView familyMembers = (TextView) findViewById(R.id.family);
-
-        // Set a click listener on that View
-        familyMembers.setOnClickListener(new View.OnClickListener() {
-            // The code in this method will be executed when the family members View is clicked on.
-            @Override
-            public void onClick(View view) {
-                Intent familyMembersIntent = new Intent(MainActivity.this, FamilyActivity.class);
-                startActivity(familyMembersIntent);
-            }
-        });
-
-        // Find the View that shows the Colors category
-        TextView colors = (TextView) findViewById(R.id.colors);
-
-        // Set a click listener on that View
-        colors.setOnClickListener(new View.OnClickListener() {
-            // The code in this method will be executed when the colors View is clicked on.
-            @Override
-            public void onClick(View view) {
-                Intent colorsIntent = new Intent(MainActivity.this, ColorsActivity.class);
-                startActivity(colorsIntent);
-            }
-        });
-
-        // Find the View that shows the Phrases category
-        TextView phrases = (TextView) findViewById(R.id.phrases);
-
-        // Set a click listener on that View
-        phrases.setOnClickListener(new View.OnClickListener() {
-            // The code in this method will be executed when the phrases View is clicked on.
-            @Override
-            public void onClick(View view) {
-                Intent phrasesIntent = new Intent(MainActivity.this, PhrasesActivity.class);
-                startActivity(phrasesIntent);
-            }
-        });
+        // Set the adapter onto the view pager
+        viewPager.setAdapter(adapter);
     }
 }

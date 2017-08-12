@@ -102,8 +102,6 @@ public class NumbersFragment extends Fragment {
                 // Get the {@link Word} object at the given position the user clicked on
                 Word word = words.get(i);
 
-                Log.v("NumbersActivity", "Current Word: " + word);
-
                 // Release the media player if it currently exists because we are about to
                 // play a different sound file
                 releaseMediaPlayer();
